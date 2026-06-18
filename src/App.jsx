@@ -1,3 +1,4 @@
+// src/App.jsx
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -5,8 +6,8 @@ import Home from './pages/Home';
 import Grupos from './pages/Grupos';
 import Cronograma from './pages/Cronograma';
 import Login from './pages/Login';
+import Materiais from './pages/Materiais'; 
 
-// Criamos um componente interno para gerenciar o layout
 function AppContent() {
   const location = useLocation();
   
@@ -15,7 +16,6 @@ function AppContent() {
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 font-sans">
-      {/* O Header só renderiza se NÃO for a página de login */}
       {!isLoginPage && <Header />}
       
       <main className="flex-grow">
@@ -24,10 +24,11 @@ function AppContent() {
           <Route path="/grupos" element={<Grupos />} />
           <Route path="/cronograma" element={<Cronograma />} />
           <Route path="/login" element={<Login />} />
+          
+          <Route path="/materiais" element={<Materiais />} />
         </Routes>
       </main>
 
-      {/* O Footer só renderiza se NÃO for a página de login */}
       {!isLoginPage && <Footer />}
     </div>
   );
