@@ -1,4 +1,6 @@
+// src/components/Header.jsx
 import React from 'react';
+import { Link } from 'react-router-dom'; // 1. IMPORTAR O COMPONENTE LINK
 
 const Header = () => {
   return (
@@ -10,7 +12,9 @@ const Header = () => {
         
         {/* Bloco 1: Logo (Lado Esquerdo) */}
         <div className="flex-1"> {/* flex-1 ocupa espaço igual para ajudar a centralizar o vizinho */}
-          <h1 className="text-2xl font-bold tracking-tighter">REAGE</h1>
+          <Link to="/"> {/* Clicar no logo também volta para a Home */}
+            <h1 className="text-2xl font-bold tracking-tighter cursor-pointer">REAGE</h1>
+          </Link>
         </div>
 
         {/* Bloco 2: Barra de Pesquisa (Centralizada e Maior) */}
@@ -24,11 +28,15 @@ const Header = () => {
           </div>
         </div>
 
-        {/* Bloco 3: Perfil (Lado Direito) */}
+        {/* Bloco 3: Perfil / Login (Lado Direito) */}
         <div className="flex-1 flex justify-end">
-          <div className="flex items-center gap-2 cursor-pointer bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition-colors">
-            <span className="text-sm font-medium">Minha Conta</span>
-          </div>
+          {/* USANDO O LINK PARA IR PARA A TELA DE LOGIN */}
+          <Link 
+            to="/login" 
+            className="flex items-center gap-2 cursor-pointer bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition-colors"
+          >
+            <span className="text-sm font-medium">👤 LOGIN</span>
+          </Link>
         </div>
       </div>
 
@@ -36,22 +44,38 @@ const Header = () => {
       <nav className="bg-reage-yellow h-12 flex items-center justify-center px-8 shadow-md">
         {/* justify-center centraliza a lista; gap-12 aumenta o espaçamento entre os itens */}
         <ul className="flex gap-12 text-reage-dark font-semibold text-sm">
-          {/* Cada item possui hover:scale para um feedback visual suave ao passar o mouse */}
-          <li className="cursor-pointer hover:underline hover:scale-105 transition-transform">
-            Home
+          
+          {/* TROCAMOS CADA ITEM POR UM COMPONENTE LINK */}
+          <li className="hover:scale-105 transition-transform">
+            <Link to="/" className="hover:underline block py-1">
+              Home
+            </Link>
           </li>
-          <li className="cursor-pointer hover:underline font-bold border-b-2 border-reage-dark">
-            Grupos
+          
+          <li className="hover:scale-105 transition-transform">
+            <Link to="/grupos" className="hover:underline block py-1 font-bold">
+              Grupos
+            </Link>
           </li>
-          <li className="cursor-pointer hover:underline hover:scale-105 transition-transform">
-            Cronograma
+          
+          <li className="hover:scale-105 transition-transform">
+            <Link to="/cronograma" className="hover:underline block py-1">
+              Cronograma
+            </Link>
           </li>
-          <li className="cursor-pointer hover:underline hover:scale-105 transition-transform">
-            Materiais
+          
+          <li className="hover:scale-105 transition-transform">
+            <Link to="/materiais" className="hover:underline block py-1">
+              Materiais
+            </Link>
           </li>
-          <li className="cursor-pointer hover:underline hover:scale-105 transition-transform">
-            Sobre
+          
+          <li className="hover:scale-105 transition-transform">
+            <Link to="/sobre" className="hover:underline block py-1">
+              Sobre
+            </Link>
           </li>
+          
         </ul>
       </nav>
     </header>
