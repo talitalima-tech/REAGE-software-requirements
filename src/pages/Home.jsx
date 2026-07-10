@@ -1,6 +1,6 @@
 // src/pages/Home.jsx
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom'; // 1. IMPORTAR O LINK PARA NAVEGAÇÃO
+import { Link } from 'react-router-dom'; 
 import { SidebarCard } from '../components/SidebarCard';
 
 const Home = () => {
@@ -17,7 +17,6 @@ const Home = () => {
   return (
     <main className="max-w-7xl mx-auto p-6 grid grid-cols-1 md:grid-cols-12 gap-8">
       
-      {/* 1. BANNER: Ocupa as 12 colunas */}
       <div className="md:col-span-12 bg-slate-200 p-8 rounded-2xl text-center text-gray-700 shadow-sm mb-2">
         <p className="text-sm md:text-base font-medium leading-relaxed">
           Bem-vindo(a) ao REAGE – Rede de Apoio a Grupos de Estudo! Aqui você organiza seus estudos, 
@@ -25,13 +24,10 @@ const Home = () => {
         </p>
       </div>
 
-      {/* 2. COLUNA ESQUERDA (aside) - Ocupa 4 colunas */}
       <aside className="md:col-span-4 space-y-8">
         
-        {/* Card: Dados do Estudante */}
         <SidebarCard title="Dados do Estudante">
           <div className="flex items-center gap-4 py-2">
-            {/* O clique no avatar agora redireciona para a página de Login */}
             <Link 
               to="/login" 
               className="w-20 h-20 bg-blue-50 rounded-full border-2 border-reage-blue flex items-center justify-center overflow-hidden hover:opacity-80 transition-opacity cursor-pointer shadow-inner"
@@ -49,13 +45,11 @@ const Home = () => {
           </div>
         </SidebarCard>
 
-        {/* Card: Resumo de Participação */}
         <SidebarCard title="Resumo de Participação">
           <ul className="text-xs space-y-2 py-2 text-gray-700">
             <li>• Grupos Criados: <strong>1</strong></li>
             <li>• Participação em Grupos: <strong>3</strong></li>
             <li>• Materiais Baixados: <strong>22</strong></li>
-            {/* Link direto para a página de Cronograma de tarefas */}
             <li className="mt-3 pt-2 border-t border-gray-100">
               <Link to="/cronograma" className="text-reage-blue hover:underline font-bold block">
                 📅 Ver Meu Cronograma →
@@ -64,22 +58,18 @@ const Home = () => {
           </ul>
         </SidebarCard>
 
-        {/* Card: Últimos Avisos */}
         <SidebarCard title="Últimos Avisos">
           <p className="text-xs text-gray-400 text-center py-4 italic">Não há nenhum aviso disponível</p>
         </SidebarCard>
       </aside>
 
-      {/* 3. COLUNA DIREITA - Ocupa 8 colunas */}
       <section className="md:col-span-8 space-y-10">
         
-        {/* Seção Meus Grupos */}
         <div>
           <h3 className="font-bold text-reage-dark mb-4 text-sm uppercase tracking-wider">
             Meus Grupos
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* Linkando os cards para a página interna de listagem de grupos */}
             <Link to="/grupos" className="bg-reage-blue text-white p-4 rounded-xl text-center text-xs font-bold shadow-sm hover:bg-sky-600 transition-all hover:scale-[1.02]">
               Grupão de Requisitos de S.
             </Link>
@@ -92,13 +82,11 @@ const Home = () => {
           </div>
         </div>
 
-        {/* Seção Grupos Recomendados */}
         <div className="space-y-4">
           <h3 className="font-bold text-reage-dark text-sm uppercase tracking-wider">
             Grupos Recomendados
           </h3>
           
-          {/* Card Recomendado 1 */}
           <div className="bg-white border border-gray-100 rounded-xl p-4 flex justify-between items-center shadow-sm">
             <div className="text-xs">
               <p className="font-bold text-reage-blue">Aulão de Probabilidade e Estatística - Monitoria</p>
@@ -116,7 +104,6 @@ const Home = () => {
             </button>
           </div>
 
-          {/* Card Recomendado 2 */}
           <div className="bg-white border border-gray-100 rounded-xl p-4 flex justify-between items-center shadow-sm">
             <div className="text-xs">
               <p className="font-bold text-reage-blue">Aulão de Programação Orientada a Objetos - Monitoria</p>
@@ -134,7 +121,6 @@ const Home = () => {
             </button>
           </div>
 
-          {/* Card Recomendado 3 */}
           <div className="bg-white border border-gray-100 rounded-xl p-4 flex justify-between items-center shadow-sm">
             <div className="text-xs">
               <p className="font-bold text-reage-blue">Aulão de Projeto e Análise de Algoritmos - Monitoria</p>
@@ -153,7 +139,6 @@ const Home = () => {
           </div>
         </div>
 
-        {/* Tabela de Disciplinas */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <h3 className="bg-gray-50 p-3 font-bold border-b text-reage-dark text-xs uppercase tracking-wider text-center">
             Minhas Disciplinas

@@ -22,20 +22,16 @@ const Login = () => {
   };
 
   return (
-    /* CONTÊINER PAI: Fundo branco e centralizado */
     <div className="bg-white w-full flex items-center justify-center min-h-[calc(100vh-160px)] py-12 px-4">
       
-      {/* CARD AMARELO: Conforme o protótipo do Figma */}
       <div className="bg-[#FFE388] p-8 sm:p-10 rounded-[20px] shadow-md w-full max-w-xl mx-auto flex flex-col items-center">
         
-        {/* BANNER REVERSO: LOGIN COM SIGAA */}
         <div className="bg-[#38A9DC] text-white w-full py-3 rounded-xl font-bold text-center text-lg uppercase tracking-wider mb-8 shadow-sm">
           Login com SIGAA
         </div>
 
         <form className="w-full max-w-md space-y-5" onSubmit={handleLogin}>
           
-          {/* INPUT DE USUÁRIO COM ÍCONE */}
           <div className="relative flex items-center bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm focus-within:ring-2 focus-within:ring-[#38A9DC] transition-all">
             <div className="px-4 text-gray-800 flex items-center justify-center border-r border-gray-300">
               <FiUser size={20} />
@@ -51,7 +47,6 @@ const Login = () => {
             />
           </div>
 
-          {/* INPUT DE SENHA COM ÍCONE E EYE */}
           <div className="relative flex items-center bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm focus-within:ring-2 focus-within:ring-[#38A9DC] transition-all">
             <div className="px-4 text-gray-800 flex items-center justify-center border-r border-gray-300">
               <FiLock size={20} />

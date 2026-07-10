@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 
 const Cronograma = () => {
-  // Dados fictícios baseados no seu print para simular o banco de dados
   const tarefasIniciais = [
     {
       id: 1,
@@ -42,7 +41,6 @@ const Cronograma = () => {
   const meses = ["Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
   const [mesAtivo, setMesAtivo] = useState("Junho");
 
-  // Função para mudar o status (Bônus de interatividade para o seu portfólio!)
   const alternarStatus = (id) => {
     setTarefas(tarefas.map(t => 
       t.id === id ? { ...t, status: t.status === "Pendente" ? "Concluído" : "Pendente" } : t
@@ -52,7 +50,6 @@ const Cronograma = () => {
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6 min-h-[calc(100vh-160px)]">
       
-      {/* 1. TOPO AZUL (Saudação) */}
       <div className="bg-reage-blue text-white p-6 rounded-2xl flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center text-2xl">
@@ -66,7 +63,6 @@ const Cronograma = () => {
         <button className="text-xl hover:bg-white/10 p-2 rounded-full transition-all">⋮</button>
       </div>
 
-      {/* 2. SELETOR DE MESES (Abas do Figma) */}
       <div className="border-b border-gray-200 overflow-x-auto">
         <div className="flex gap-2 pb-1 min-w-max">
           {meses.map((mes) => (

@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 
 const Grupos = () => {
-  // 'menu' = ícones | 'criar' = form | 'buscar' = lista | 'painel' = chat interno do grupo
   const [abaAtiva, setAbaAtiva] = useState('menu');
   const [grupoSelecionado, setGrupoSelecionado] = useState(null);
   const [mostrarModalSenha, setMostrarModalSenha] = useState(false);
@@ -26,7 +25,7 @@ const Grupos = () => {
   const handleEntrarNoGrupo = () => {
     setMostrarModalSenha(false);
     setSenhaDigitada('');
-    setAbaAtiva('painel'); // Direciona para a Tela do Chat/Painel
+    setAbaAtiva('painel'); 
   };
 
   // Enviar mensagem no chat usando o estado do React
@@ -51,7 +50,6 @@ const Grupos = () => {
       {/* CARD CENTRAL */}
       <div className="bg-white/80 backdrop-blur-md rounded-[40px] shadow-2xl w-full max-w-5xl flex flex-col md:flex-row overflow-hidden border border-white/20 min-h-[500px]">
         
-        {/* --- LADO ESQUERDO: Perfil do Usuário (Ocultado apenas no painel do chat para dar mais espaço) --- */}
         {abaAtiva !== 'painel' && (
           <div className="w-full md:w-[35%] p-8 flex flex-col items-center justify-center text-center border-b md:border-b-0 md:border-r border-gray-300/50 bg-white/40 animate-fade-in">
             {abaAtiva !== 'menu' && (
@@ -87,10 +85,9 @@ const Grupos = () => {
           </div>
         )}
 
-        {/* --- LADO DIREITO: Conteúdo Dinâmico --- */}
         <div className="flex-1 p-8 flex flex-col justify-center">
           
-          {/* CASO 1: MENU DE OPÇÕES PADRÃO */}
+          {/* MENU DE OPÇÕES PADRÃO */}
           {abaAtiva === 'menu' && (
             <div>
               <h3 className="text-sm font-black text-reage-dark mb-6 uppercase tracking-wider text-center md:text-left">O que você pode fazer aqui?</h3>
@@ -105,7 +102,7 @@ const Grupos = () => {
             </div>
           )}
 
-          {/* CASO 2: FORMULÁRIO DE CRIAR GRUPO */}
+          {/* FORMULÁRIO DE CRIAR GRUPO */}
           {abaAtiva === 'criar' && (
             <div className="animate-fade-in">
               <h3 className="text-xs font-black bg-reage-dark text-white px-4 py-1.5 rounded-md inline-block uppercase tracking-wider mb-6">Criar Grupo</h3>
@@ -135,7 +132,7 @@ const Grupos = () => {
             </div>
           )}
 
-          {/* CASO 3: LISTAGEM DE GRUPOS EXISTENTES */}
+          {/*LISTAGEM DE GRUPOS EXISTENTES */}
           {abaAtiva === 'buscar' && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 animate-fade-in">
               <div className="lg:col-span-12 text-center md:text-left mb-2">
@@ -181,7 +178,7 @@ const Grupos = () => {
             </div>
           )}
 
-          {/* CASO 4: PAINEL INTERNO DO GRUPO (CHAT ATIVO) */}
+          {/* PAINEL INTERNO DO GRUPO (CHAT ATIVO) */}
           {abaAtiva === 'painel' && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 animate-fade-in w-full h-[420px]">
               {/* Topo do Chat */}

@@ -1,7 +1,6 @@
 // src/components/SidebarCard.jsx
 export const SidebarCard = ({ title, children }) => (
   <div className="border-2 border-sky-200 rounded-xl p-4 bg-white relative mt-6">
-    {/* Título posicionado na borda do card */}
     <h3 className="absolute -top-3 left-1/2 -translate-x-1/2 bg-white px-4 font-bold text-reage-dark text-sm whitespace-nowrap">
       {title}
     </h3>
