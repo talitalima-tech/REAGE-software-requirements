@@ -1,13 +1,19 @@
 // src/pages/Grupos.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 
 const Grupos = () => {
+  const location = useLocation();
+
   const [abaAtiva, setAbaAtiva] = useState('menu');
   const [grupoSelecionado, setGrupoSelecionado] = useState(null);
   const [mostrarModalSenha, setMostrarModalSenha] = useState(false);
   const [senhaDigitada, setSenhaDigitada] = useState('');
-  
-  // Estados para o Chat Interno do Grupo
+  const [erroSenha, setErroSenha] = useState(''); // Estado para mensagem de erro de senha
+
+  // 1. ESTADO DA BUSCA
+  const [termoBusca, setTermoBusca] = useState('');
+
   const [mostrarModalInfo, setMostrarModalInfo] = useState(false);
   const [novaMensagem, setNovaMensagem] = useState('');
   const [historicoMensagens, setHistoricoMensagens] = useState([
@@ -15,20 +21,46 @@ const Grupos = () => {
     { id: 2, autor: "Ana Maria", texto: "Ainda não, tô travada na elicitação de escopo daquela tabela.", hora: "14:05" },
   ]);
 
+  // Mock de dados com senhas explícitas para validação
   const listaGrupos = [
     { id: 1, titulo: "Grupão de Requisitos de S.", materia: "Requisitos de Software", local: "Sala 02", unidade: "Unidade I", hora: "13:30", data: "25/06/2026", senha: "123" },
-    { id: 2, titulo: "Vamos nos matar - POO", materia: "Programação Orientada a Objetos", local: "Laboratório 3", unidade: "Unidade I", hora: "15:30", data: "26/06/2026", senha: "Sim" },
+    { id: 2, titulo: "Vamos nos matar - POO", materia: "Programação Orientada a Objetos", local: "Laboratório 3", unidade: "Unidade I", hora: "15:30", data: "26/06/2026", senha: "poo" },
     { id: 3, titulo: "LIP - Grupo do Ariel", materia: "Linguagens de Programação", local: "Auditorio", unidade: "Unidade I", hora: "14:00", data: "28/06/2026", senha: "Não" },
   ];
 
-  // Executado quando o usuário valida a senha e entra no grupo
-  const handleEntrarNoGrupo = () => {
-    setMostrarModalSenha(false);
-    setSenhaDigitada('');
-    setAbaAtiva('painel'); 
+  // Monitora se o usuário veio da Home clicando em "Meus Grupos"
+  useEffect(() => {
+    if (location.state?.abrirDiretoNoChat) {
+      setGrupoSelecionado(listaGrupos[0]);
+      setAbaAtiva('painel');
+    }
+  }, [location.state]);
+
+  // 2. LÓGICA DO FILTRO DE BUSCA DINÂMICO
+  const gruposFiltrados = listaGrupos.filter((grupo) => {
+    const termo = termoBusca.toLowerCase();
+    return (
+      grupo.titulo.toLowerCase().includes(termo) ||
+      grupo.materia.toLowerCase().includes(termo)
+    );
+  });
+
+  // 3. LÓGICA DE VALIDAÇÃO REAL DA SENHA
+  const handleEntrarNoGrupo = (e) => {
+    e.preventDefault();
+    setErroSenha('');
+
+    // Se o grupo não exigir senha ou a senha estiver correta
+    if (grupoSelecionado.senha === "Não" || senhaDigitada === grupoSelecionado.senha) {
+      setMostrarModalSenha(false);
+      setSenhaDigitada('');
+      setAbaAtiva('painel');
+    } else {
+      // Caso a senha esteja incorreta
+      setErroSenha('Senha incorreta! Tente novamente.');
+    }
   };
 
-  // Enviar mensagem no chat usando o estado do React
   const handleEnviarMensagem = (e) => {
     e.preventDefault();
     if (!novaMensagem.trim()) return;
@@ -50,11 +82,12 @@ const Grupos = () => {
       {/* CARD CENTRAL */}
       <div className="bg-white/80 backdrop-blur-md rounded-[40px] shadow-2xl w-full max-w-5xl flex flex-col md:flex-row overflow-hidden border border-white/20 min-h-[500px]">
         
+        {/* --- LADO ESQUERDO: Perfil do Usuário --- */}
         {abaAtiva !== 'painel' && (
           <div className="w-full md:w-[35%] p-8 flex flex-col items-center justify-center text-center border-b md:border-b-0 md:border-r border-gray-300/50 bg-white/40 animate-fade-in">
             {abaAtiva !== 'menu' && (
               <button 
-                onClick={() => { setAbaAtiva('menu'); setGrupoSelecionado(null); }}
+                onClick={() => { setAbaAtiva('menu'); setGrupoSelecionado(null); setTermoBusca(''); }}
                 className="mb-4 text-xs font-bold text-reage-blue hover:underline flex items-center gap-1 self-start"
               >
                 ◀ Voltar ao Menu
@@ -79,15 +112,19 @@ const Grupos = () => {
               </button>
             </div>
             
-            <button onClick={() => setAbaAtiva('menu')} className="mt-4 flex items-center gap-2 text-reage-blue font-bold border-2 border-reage-blue/30 px-6 py-2 rounded-xl hover:bg-reage-blue/10 transition-all text-xs w-full justify-center">
+            <button 
+              onClick={() => { setGrupoSelecionado(listaGrupos[0]); setAbaAtiva('painel'); }}
+              className="mt-4 flex items-center gap-2 text-reage-blue font-bold border-2 border-reage-blue/30 px-6 py-2 rounded-xl hover:bg-reage-blue/10 transition-all text-xs w-full justify-center"
+            >
               <span>👥</span> Meus Grupos
             </button>
           </div>
         )}
 
+        {/* --- LADO DIREITO: Conteúdo Dinâmico --- */}
         <div className="flex-1 p-8 flex flex-col justify-center">
           
-          {/* MENU DE OPÇÕES PADRÃO */}
+          {/* CASO 1: MENU DE OPÇÕES PADRÃO */}
           {abaAtiva === 'menu' && (
             <div>
               <h3 className="text-sm font-black text-reage-dark mb-6 uppercase tracking-wider text-center md:text-left">O que você pode fazer aqui?</h3>
@@ -95,14 +132,14 @@ const Grupos = () => {
                 <div onClick={() => setAbaAtiva('criar')}><MenuOption icon="💬" label="Trocar mensagens" /></div>
                 <div><MenuOption icon="🔔" label="Receber lembretes" /></div>
                 <div onClick={() => setAbaAtiva('criar')}><MenuOption icon="⚙️" label="Criar seu próprio grupo" /></div>
-                <div onClick={() => { setAbaAtiva('buscar'); setGrupoSelecionado(listaGrupos[0]); }}><MenuOption icon="🔖" label="Ver seus grupos salvos" /></div>
+                <div onClick={() => { setGrupoSelecionado(listaGrupos[0]); setAbaAtiva('painel'); }}><MenuOption icon="🔖" label="Ver seus grupos salvos" /></div>
                 <div onClick={() => setAbaAtiva('buscar')}><MenuOption icon="🔍" label="Buscar grupos de amigos" /></div>
                 <div><MenuOption icon="⭐" label="Marcar favoritos" /></div>
               </div>
             </div>
           )}
 
-          {/* FORMULÁRIO DE CRIAR GRUPO */}
+          {/* CASO 2: FORMULÁRIO DE CRIAR GRUPO */}
           {abaAtiva === 'criar' && (
             <div className="animate-fade-in">
               <h3 className="text-xs font-black bg-reage-dark text-white px-4 py-1.5 rounded-md inline-block uppercase tracking-wider mb-6">Criar Grupo</h3>
@@ -132,27 +169,41 @@ const Grupos = () => {
             </div>
           )}
 
-          {/*LISTAGEM DE GRUPOS EXISTENTES */}
+          {/* CASO 3: LISTAGEM DE GRUPOS EXISTENTES */}
           {abaAtiva === 'buscar' && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 animate-fade-in">
               <div className="lg:col-span-12 text-center md:text-left mb-2">
                 <h3 className="text-xs font-black bg-reage-dark text-white px-4 py-1.5 rounded-md inline-block uppercase tracking-wider">Grupos Existentes</h3>
               </div>
               <div className="lg:col-span-7 space-y-2 max-h-[280px] overflow-y-auto pr-1">
-                <input type="text" placeholder="🔍 Buscar grupo..." className="w-full border text-xs p-2 rounded-lg bg-white mb-2" />
+                
+                {/* INPUT DE BUSCA CONECTADO AO ESTADO */}
+                <input 
+                  type="text" 
+                  placeholder="🔍 Buscar por título ou matéria..." 
+                  value={termoBusca}
+                  onChange={(e) => setTermoBusca(e.target.value)}
+                  className="w-full border text-xs p-2 rounded-lg bg-white mb-2 focus:outline-reage-blue" 
+                />
+                
                 <div className="grid grid-cols-2 gap-2">
-                  {listaGrupos.map((g) => (
-                    <div key={g.id} onClick={() => setGrupoSelecionado(g)} className={`p-3 rounded-xl border-2 text-left cursor-pointer transition-all ${grupoSelecionado?.id === g.id ? 'border-reage-blue bg-blue-50/60' : 'border-gray-200 bg-white hover:bg-gray-50'}`}>
-                      <div className="flex justify-between items-start mb-1">
-                        <span className="text-[9px] text-gray-400 font-bold">👤 03/10</span>
-                        {g.senha !== "Não" && <span className="text-[9px]">🔒</span>}
+                  {gruposFiltrados.length > 0 ? (
+                    gruposFiltrados.map((g) => (
+                      <div key={g.id} onClick={() => setGrupoSelecionado(g)} className={`p-3 rounded-xl border-2 text-left cursor-pointer transition-all ${grupoSelecionado?.id === g.id ? 'border-reage-blue bg-blue-50/60' : 'border-gray-200 bg-white hover:bg-gray-50'}`}>
+                        <div className="flex justify-between items-start mb-1">
+                          <span className="text-[9px] text-gray-400 font-bold">👤 03/10</span>
+                          {g.senha !== "Não" && <span className="text-[9px]">🔒</span>}
+                        </div>
+                        <h4 className="font-bold text-[11px] text-reage-dark leading-tight line-clamp-2">{g.titulo}</h4>
+                        <p className="text-[9px] text-reage-blue font-semibold mt-1">#{g.materia}</p>
                       </div>
-                      <h4 className="font-bold text-[11px] text-reage-dark leading-tight line-clamp-2">{g.titulo}</h4>
-                      <p className="text-[9px] text-reage-blue font-semibold mt-1">#{g.materia}</p>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <p className="text-xs text-gray-400 italic col-span-2 p-2">Nenhum grupo encontrado.</p>
+                  )}
                 </div>
               </div>
+              
               <div className="lg:col-span-5 border border-gray-200 bg-white/90 rounded-2xl p-4 flex flex-col justify-between shadow-sm min-h-[240px]">
                 {grupoSelecionado ? (
                   <div className="text-[10px] text-gray-600 space-y-2 flex flex-col h-full justify-between">
@@ -162,11 +213,22 @@ const Grupos = () => {
                         <p><strong>Local:</strong> {grupoSelecionado.local}</p>
                         <p><strong>Unidade:</strong> {grupoSelecionado.unidade}</p>
                         <p><strong>Hora:</strong> {grupoSelecionado.hora}</p>
-                        <p><strong>Senha:</strong> {grupoSelecionado.senha}</p>
+                        <p><strong>Exige Senha:</strong> {grupoSelecionado.senha !== "Não" ? "Sim" : "Não"}</p>
                         <p className="col-span-2 mt-1"><strong>Matéria:</strong> {grupoSelecionado.materia}</p>
                       </div>
                     </div>
-                    <button onClick={() => setMostrarModalSenha(true)} className="w-full bg-[#38A9DC] hover:bg-sky-600 text-white font-bold py-2 rounded-xl text-xs uppercase tracking-wide">+ Participar</button>
+                    <button 
+                      onClick={() => {
+                        if (grupoSelecionado.senha === "Não") {
+                          setAbaAtiva('painel'); // Entra direto se não tiver senha
+                        } else {
+                          setMostrarModalSenha(true); // Abre o modal de senha
+                        }
+                      }} 
+                      className="w-full bg-[#38A9DC] hover:bg-sky-600 text-white font-bold py-2 rounded-xl text-xs uppercase tracking-wide"
+                    >
+                      {grupoSelecionado.senha !== "Não" ? "🔒 Entrar com Senha" : "+ Participar"}
+                    </button>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center text-center h-full text-gray-400 p-4">
@@ -178,33 +240,28 @@ const Grupos = () => {
             </div>
           )}
 
-          {/* PAINEL INTERNO DO GRUPO (CHAT ATIVO) */}
+          {/* CASO 4: PAINEL INTERNO DO GRUPO (CHAT ATIVO) */}
           {abaAtiva === 'painel' && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 animate-fade-in w-full h-[420px]">
-              {/* Topo do Chat */}
               <div className="lg:col-span-12 bg-reage-dark text-white px-4 py-2 rounded-xl flex justify-between items-center shadow-sm">
                 <div>
                   <h3 className="text-xs font-black uppercase tracking-wider">{grupoSelecionado?.titulo || "Grupo de Estudos"}</h3>
                   <span className="text-[9px] opacity-80">🟢 3 estudantes online</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button onClick={() => setMostrarModalInfo(true)} className="bg-white/20 p-1.5 rounded-lg text-xs hover:bg-white/30" title="Informações">ℹ️ Info</button>
-                  <button onClick={() => { setAbaAtiva('menu'); setGrupoSelecionado(null); }} className="bg-red-500/80 p-1.5 rounded-lg text-[10px] font-bold hover:bg-red-600">SAIR ✕</button>
+                  <button onClick={() => setMostrarModalInfo(true)} className="bg-white/20 p-1.5 rounded-lg text-xs hover:bg-white/30">ℹ️ Info</button>
+                  <button onClick={() => { setAbaAtiva('buscar'); setGrupoSelecionado(null); }} className="bg-red-500/80 p-1.5 rounded-lg text-[10px] font-bold hover:bg-red-600">SAIR ✕</button>
                 </div>
               </div>
 
-              {/* Lista de Membros Online (Esquerda) */}
               <div className="lg:col-span-3 bg-white/60 border border-gray-200 rounded-xl p-3 flex flex-col gap-2 overflow-y-auto text-[10px]">
                 <p className="font-bold text-gray-400 uppercase tracking-wider text-[9px] mb-1">Integrantes</p>
                 <div className="flex items-center gap-1.5 bg-blue-50 p-1.5 rounded-md font-bold text-reage-blue"><span>🐷</span> Amanda (Você)</div>
                 <div className="flex items-center gap-1.5 p-1.5 text-gray-600"><span>👤</span> Ariel</div>
                 <div className="flex items-center gap-1.5 p-1.5 text-gray-600"><span>👤</span> Ana Maria</div>
-                <div className="flex items-center gap-1.5 p-1.5 text-gray-300 italic"><span>👤</span> Vazio</div>
               </div>
 
-              {/* Corpo das Mensagens e Input de Texto (Direita) */}
               <div className="lg:col-span-9 flex flex-col justify-between bg-white border border-gray-200 rounded-xl p-3 shadow-inner h-full overflow-hidden">
-                {/* Janela de Mensagens */}
                 <div className="space-y-3 overflow-y-auto pr-1 flex-1 text-[11px]">
                   {historicoMensagens.map((msg) => (
                     <div key={msg.id} className={`flex flex-col max-w-[80%] ${msg.autor === "Amanda Laiane" ? 'ml-auto items-end' : 'mr-auto items-start'}`}>
@@ -216,7 +273,6 @@ const Grupos = () => {
                   ))}
                 </div>
 
-                {/* Formulário de Enviar Mensagem */}
                 <form onSubmit={handleEnviarMensagem} className="flex gap-2 border-t pt-2 mt-2">
                   <input 
                     type="text" 
@@ -234,34 +290,43 @@ const Grupos = () => {
         </div>
       </div>
 
-      {/* --- MODAL DE DIGITAR SENHA --- */}
+      {/* --- MODAL DE DIGITAR SENHA COM VALIDAÇÃO REAL --- */}
       {mostrarModalSenha && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl p-6 shadow-2xl max-w-xs w-full text-center relative border border-gray-100">
-            <button onClick={() => setMostrarModalSenha(false)} className="absolute right-4 top-4 text-gray-400 hover:text-black font-bold text-sm">✕</button>
+          <form onSubmit={handleEntrarNoGrupo} className="bg-white rounded-3xl p-6 shadow-2xl max-w-xs w-full text-center relative border border-gray-100">
+            <button type="button" onClick={() => { setMostrarModalSenha(false); setErroSenha(''); setSenhaDigitada(''); }} className="absolute right-4 top-4 text-gray-400 hover:text-black font-bold text-sm">✕</button>
             <h4 className="font-black text-reage-dark text-xs uppercase tracking-wider mb-2">Entrar no Grupo</h4>
-            <p className="text-[10px] text-gray-500 font-medium mb-4">Digite a senha para entrar no grupo</p>
-            <input type="password" placeholder="Senha" value={senhaDigitada} onChange={(e) => setSenhaDigitada(e.target.value)} className="w-full border border-gray-300 rounded-xl p-2 text-center text-xs mb-4 focus:outline-reage-blue" />
-            <button onClick={handleEntrarNoGrupo} className="w-full bg-reage-dark hover:bg-black text-white py-2 rounded-xl text-xs font-bold uppercase tracking-wide">+ Participar</button>
-          </div>
+            <p className="text-[10px] text-gray-500 font-medium mb-3">Dica secreta: a senha do primeiro grupo é <code className="bg-gray-100 p-0.5 rounded font-mono">123</code></p>
+            
+            <input 
+              type="password" 
+              placeholder="Senha do grupo" 
+              value={senhaDigitada} 
+              onChange={(e) => setSenhaDigitada(e.target.value)} 
+              className="w-full border border-gray-300 rounded-xl p-2 text-center text-xs mb-2 focus:outline-reage-blue"
+              required 
+            />
+
+            {/* MENSAGEM DE ERRO DINÂMICA */}
+            {erroSenha && <p className="text-[10px] text-red-500 font-bold mb-3 animate-pulse">{erroSenha}</p>}
+            
+            <button type="submit" className="w-full bg-reage-dark hover:bg-black text-white py-2 rounded-xl text-xs font-bold uppercase tracking-wide">Confirmar e Entrar</button>
+          </form>
         </div>
       )}
 
-      {/* --- MODAL INTERNO: INFORMAÇÕES DO GRUPO (DENTRO DO CHAT) --- */}
+      {/* --- MODAL INTERNO: INFORMAÇÕES DO GRUPO --- */}
       {mostrarModalInfo && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl p-6 shadow-2xl max-w-xs w-full relative text-center text-xs text-gray-700 border">
             <button onClick={() => setMostrarModalInfo(false)} className="absolute right-4 top-4 text-gray-400 font-bold">✕</button>
             <h4 className="font-black text-reage-dark text-sm uppercase border-b pb-2 mb-4">Informações</h4>
-            
             <div className="space-y-2 text-left bg-slate-50 p-3 rounded-xl border mb-4 text-[11px]">
               <p><strong>Matéria:</strong> {grupoSelecionado?.materia}</p>
               <p><strong>Hora:</strong> {grupoSelecionado?.hora}</p>
               <p><strong>Local:</strong> {grupoSelecionado?.local} | {grupoSelecionado?.unidade}</p>
               <p><strong>Data:</strong> {grupoSelecionado?.data}</p>
-              <p><strong>Senha:</strong> {grupoSelecionado?.senha}</p>
             </div>
-
             <div className="text-[10px] text-gray-400 bg-gray-100 p-2 rounded-lg break-all">
               <strong>Link:</strong> https://reage.com/grupos/{grupoSelecionado?.id}
             </div>
