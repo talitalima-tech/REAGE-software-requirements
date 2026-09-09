@@ -9,82 +9,189 @@ const Grupos = () => {
   const [grupoSelecionado, setGrupoSelecionado] = useState(null);
   const [mostrarModalSenha, setMostrarModalSenha] = useState(false);
   const [senhaDigitada, setSenhaDigitada] = useState('');
-  const [erroSenha, setErroSenha] = useState(''); // Estado para mensagem de erro de senha
+  const [erroSenha, setErroSenha] = useState('');
 
-  // 1. ESTADO DA BUSCA
+  // Estados de dados e busca
   const [termoBusca, setTermoBusca] = useState('');
+  const [listaGrupos, setListaGrupos] = useState([]);
+  const [carregando, setCarregando] = useState(false);
 
+  // Estados do Formulário de Criação
+  const [novoTitulo, setNovoTitulo] = useState('');
+  const [novaMateria, setNovaMateria] = useState('');
+  const [novoLocal, setNovoLocal] = useState('');
+  const [novaUnidade, setNovaUnidade] = useState('Unidade I');
+  const [novaHora, setNovaHora] = useState('');
+  const [novaData, setNovaData] = useState('25/06/2026');
+  const [novaSenhaGrupo, setNovaSenhaGrupo] = useState('');
+
+  // Estados do Chat
   const [mostrarModalInfo, setMostrarModalInfo] = useState(false);
   const [novaMensagem, setNovaMensagem] = useState('');
-  const [historicoMensagens, setHistoricoMensagens] = useState([
-    { id: 1, autor: "Ariel", texto: "E aí pessoal, conseguiram fazer a questão 3 de Requisitos?", hora: "14:02" },
-    { id: 2, autor: "Ana Maria", texto: "Ainda não, tô travada na elicitação de escopo daquela tabela.", hora: "14:05" },
-  ]);
+  const [historicoMensagens, setHistoricoMensagens] = useState([]);
 
-  // Mock de dados com senhas explícitas para validação
-  const listaGrupos = [
-    { id: 1, titulo: "Grupão de Requisitos de S.", materia: "Requisitos de Software", local: "Sala 02", unidade: "Unidade I", hora: "13:30", data: "25/06/2026", senha: "123" },
-    { id: 2, titulo: "Vamos nos matar - POO", materia: "Programação Orientada a Objetos", local: "Laboratório 3", unidade: "Unidade I", hora: "15:30", data: "26/06/2026", senha: "poo" },
-    { id: 3, titulo: "LIP - Grupo do Ariel", materia: "Linguagens de Programação", local: "Auditorio", unidade: "Unidade I", hora: "14:00", data: "28/06/2026", senha: "Não" },
-  ];
+  // 1. BUSCAR GRUPOS DO MYSQL VIA API
+  const buscarGruposDoBackend = async (busca = '') => {
+    setCarregando(true);
+    try {
+      const url = busca
+        ? `http://localhost:3001/api/grupos?busca=${encodeURIComponent(busca)}`
+        : 'http://localhost:3001/api/grupos';
 
-  // Monitora se o usuário veio da Home clicando em "Meus Grupos"
-  useEffect(() => {
-    if (location.state?.abrirDiretoNoChat) {
-      setGrupoSelecionado(listaGrupos[0]);
-      setAbaAtiva('painel');
-    }
-  }, [location.state]);
+      const resposta = await fetch(url);
+      const dados = await resposta.json();
 
-  // 2. LÓGICA DO FILTRO DE BUSCA DINÂMICO
-  const gruposFiltrados = listaGrupos.filter((grupo) => {
-    const termo = termoBusca.toLowerCase();
-    return (
-      grupo.titulo.toLowerCase().includes(termo) ||
-      grupo.materia.toLowerCase().includes(termo)
-    );
-  });
-
-  // 3. LÓGICA DE VALIDAÇÃO REAL DA SENHA
-  const handleEntrarNoGrupo = (e) => {
-    e.preventDefault();
-    setErroSenha('');
-
-    // Se o grupo não exigir senha ou a senha estiver correta
-    if (grupoSelecionado.senha === "Não" || senhaDigitada === grupoSelecionado.senha) {
-      setMostrarModalSenha(false);
-      setSenhaDigitada('');
-      setAbaAtiva('painel');
-    } else {
-      // Caso a senha esteja incorreta
-      setErroSenha('Senha incorreta! Tente novamente.');
+      if (resposta.ok) {
+        setListaGrupos(dados);
+      }
+    } catch (error) {
+      console.error("Erro ao conectar com o backend:", error);
+    } finally {
+      setCarregando(false);
     }
   };
 
-  const handleEnviarMensagem = (e) => {
+  useEffect(() => {
+    buscarGruposDoBackend();
+  }, []);
+
+  // Monitora busca com debounce leve
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      buscarGruposDoBackend(termoBusca);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [termoBusca]);
+
+  // Monitora se veio da Home para abrir o chat
+  useEffect(() => {
+    if (location.state?.abrirDiretoNoChat && listaGrupos.length > 0) {
+      setGrupoSelecionado(listaGrupos[0]);
+      setAbaAtiva('painel');
+      carregarMensagens(listaGrupos[0].id);
+    }
+  }, [location.state, listaGrupos]);
+
+  // Carregar mensagens de um grupo específico
+  const carregarMensagens = async (grupoId) => {
+    try {
+      const resposta = await fetch(`http://localhost:3001/api/${grupoId}/mensagens`);
+      const dados = await resposta.json();
+      if (resposta.ok) {
+        setHistoricoMensagens(dados);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar mensagens:", error);
+    }
+  };
+
+  // 2. CRIAR NOVO GRUPO NO BANCO DE DADOS
+  const handleCriarGrupoSubmit = async (e) => {
     e.preventDefault();
-    if (!novaMensagem.trim()) return;
+    try {
+      const resposta = await fetch('http://localhost:3001/api/grupos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          titulo: novoTitulo,
+          materia: novaMateria,
+          local: novoLocal,
+          unidade: novaUnidade,
+          hora: novaHora,
+          data: novaData,
+          senha: novaSenhaGrupo
+        })
+      });
 
-    const msg = {
-      id: Date.now(),
-      autor: "Amanda Laiane",
-      texto: novaMensagem,
-      hora: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
+      if (resposta.ok) {
+        // Limpa formulário e atualiza lista do MySQL
+        setNovoTitulo('');
+        setNovaMateria('');
+        setNovoLocal('');
+        setNovaHora('');
+        setNovaSenhaGrupo('');
+        buscarGruposDoBackend();
+        setAbaAtiva('buscar');
+      } else {
+        alert("Erro ao criar o grupo no banco.");
+      }
+    } catch (error) {
+      console.error("Erro na requisição de criação:", error);
+    }
+  };
 
-    setHistoricoMensagens([...historicoMensagens, msg]);
-    setNovaMensagem('');
+  // 3. VALIDAÇÃO REAL DE SENHA NO BACKEND
+  const handleEntrarNoGrupo = async (e) => {
+    e.preventDefault();
+    setErroSenha('');
+
+    if (!grupoSelecionado) return;
+
+    if (grupoSelecionado.senha === "Não" || !grupoSelecionado.senha) {
+      setMostrarModalSenha(false);
+      setAbaAtiva('painel');
+      carregarMensagens(grupoSelecionado.id);
+      return;
+    }
+
+    try {
+      const resposta = await fetch(`http://localhost:3001/api/grupos/${grupoSelecionado.id}/validar-senha`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ senha: senhaDigitada })
+      });
+
+      const dados = await resposta.json();
+
+      if (resposta.ok && dados.sucesso) {
+        setMostrarModalSenha(false);
+        setSenhaDigitada('');
+        setAbaAtiva('painel');
+        carregarMensagens(grupoSelecionado.id);
+      } else {
+        setErroSenha(dados.erro || 'Senha incorreta!');
+      }
+    } catch (error) {
+      setErroSenha('Erro ao validar senha no servidor.');
+    }
+  };
+
+  // 4. ENVIAR MENSAGEM NO CHAT (Salva no MySQL)
+  const handleEnviarMensagem = async (e) => {
+    e.preventDefault();
+    if (!novaMensagem.trim() || !grupoSelecionado) return;
+
+    const horaAtual = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    try {
+      const resposta = await fetch(`http://localhost:3001/api/${grupoSelecionado.id}/mensagens`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          autor: "Amanda Laiane",
+          texto: novaMensagem,
+          hora: horaAtual
+        })
+      });
+
+      if (resposta.ok) {
+        const mensagemSalva = await resposta.json();
+        setHistoricoMensagens([...historicoMensagens, mensagemSalva]);
+        setNovaMensagem('');
+      }
+    } catch (error) {
+      console.error("Erro ao enviar mensagem:", error);
+    }
   };
 
   return (
     <div className="bg-sky-400 min-h-[calc(100vh-160px)] flex items-center justify-center p-6 bg-cover bg-center">
       
-      {/* CARD CENTRAL */}
       <div className="bg-white/80 backdrop-blur-md rounded-[40px] shadow-2xl w-full max-w-5xl flex flex-col md:flex-row overflow-hidden border border-white/20 min-h-[500px]">
         
-        {/* --- LADO ESQUERDO: Perfil do Usuário --- */}
+        {/* LADO ESQUERDO: Perfil */}
         {abaAtiva !== 'painel' && (
-          <div className="w-full md:w-[35%] p-8 flex flex-col items-center justify-center text-center border-b md:border-b-0 md:border-r border-gray-300/50 bg-white/40 animate-fade-in">
+          <div className="w-full md:w-[35%] p-8 flex flex-col items-center justify-center text-center border-b md:border-b-0 md:border-r border-gray-300/50 bg-white/40">
             {abaAtiva !== 'menu' && (
               <button 
                 onClick={() => { setAbaAtiva('menu'); setGrupoSelecionado(null); setTermoBusca(''); }}
@@ -111,162 +218,130 @@ const Grupos = () => {
                 <span>🔍</span> Buscar
               </button>
             </div>
-            
-            <button 
-              onClick={() => { setGrupoSelecionado(listaGrupos[0]); setAbaAtiva('painel'); }}
-              className="mt-4 flex items-center gap-2 text-reage-blue font-bold border-2 border-reage-blue/30 px-6 py-2 rounded-xl hover:bg-reage-blue/10 transition-all text-xs w-full justify-center"
-            >
-              <span>👥</span> Meus Grupos
-            </button>
           </div>
         )}
 
-        {/* --- LADO DIREITO: Conteúdo Dinâmico --- */}
+        {/* LADO DIREITO: Conteúdo */}
         <div className="flex-1 p-8 flex flex-col justify-center">
           
-          {/* CASO 1: MENU DE OPÇÕES PADRÃO */}
           {abaAtiva === 'menu' && (
             <div>
-              <h3 className="text-sm font-black text-reage-dark mb-6 uppercase tracking-wider text-center md:text-left">O que você pode fazer aqui?</h3>
+              <h3 className="text-sm font-black text-reage-dark mb-6 uppercase tracking-wider text-center md:text-left">O que você deseja fazer?</h3>
               <div className="grid grid-cols-3 gap-4">
-                <div onClick={() => setAbaAtiva('criar')}><MenuOption icon="💬" label="Trocar mensagens" /></div>
+                <div onClick={() => setAbaAtiva('buscar')}><MenuOption icon="💬" label="Entrar em chats" /></div>
                 <div><MenuOption icon="🔔" label="Receber lembretes" /></div>
-                <div onClick={() => setAbaAtiva('criar')}><MenuOption icon="⚙️" label="Criar seu próprio grupo" /></div>
-                <div onClick={() => { setGrupoSelecionado(listaGrupos[0]); setAbaAtiva('painel'); }}><MenuOption icon="🔖" label="Ver seus grupos salvos" /></div>
-                <div onClick={() => setAbaAtiva('buscar')}><MenuOption icon="🔍" label="Buscar grupos de amigos" /></div>
-                <div><MenuOption icon="⭐" label="Marcar favoritos" /></div>
+                <div onClick={() => setAbaAtiva('criar')}><MenuOption icon="⚙️" label="Criar grupo no MySQL" /></div>
+                <div onClick={() => setAbaAtiva('buscar')}><MenuOption icon="🔍" label="Buscar no Banco" /></div>
               </div>
             </div>
           )}
 
-          {/* CASO 2: FORMULÁRIO DE CRIAR GRUPO */}
           {abaAtiva === 'criar' && (
             <div className="animate-fade-in">
-              <h3 className="text-xs font-black bg-reage-dark text-white px-4 py-1.5 rounded-md inline-block uppercase tracking-wider mb-6">Criar Grupo</h3>
-              <form className="grid grid-cols-1 lg:grid-cols-12 gap-4" onSubmit={(e) => { e.preventDefault(); setGrupoSelecionado(listaGrupos[0]); setAbaAtiva('buscar'); }}>
-                <div className="lg:col-span-5 bg-white border border-gray-200 rounded-xl p-3 text-center shadow-sm">
-                  <p className="text-[10px] font-bold text-gray-500 mb-2">◀ Junho 2026 ▶</p>
-                  <div className="grid grid-cols-7 gap-1 text-[9px] font-bold text-gray-400">
-                    <span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span>
-                    <span className="p-1">21</span><span className="p-1">22</span><span className="p-1">23</span><span className="p-1">24</span>
-                    <span className="bg-reage-blue text-white rounded p-1">25</span><span className="p-1">26</span><span className="p-1">27</span>
-                  </div>
-                </div>
-                <div className="lg:col-span-7 space-y-2 text-xs">
-                  <input type="text" placeholder="Campo de título do grupo..." className="w-full border border-gray-300 rounded-lg p-2 focus:outline-reage-blue bg-white" required />
-                  <select className="w-full border border-gray-300 rounded-lg p-2 focus:outline-reage-blue bg-white text-gray-600">
-                    <option>Escolha a disciplina de acordo com sua grade...</option>
-                    <option>Requisitos de Software</option>
-                    <option>Programação Orientada a Objetos</option>
+              <h3 className="text-xs font-black bg-reage-dark text-white px-4 py-1.5 rounded-md inline-block uppercase tracking-wider mb-4">Novo Grupo (MySQL)</h3>
+              <form className="space-y-3 text-xs" onSubmit={handleCriarGrupoSubmit}>
+                <input type="text" placeholder="Título do Grupo" value={novoTitulo} onChange={(e) => setNovoTitulo(e.target.value)} className="w-full border border-gray-300 rounded-lg p-2 bg-white" required />
+                <input type="text" placeholder="Matéria / Disciplina" value={novaMateria} onChange={(e) => setNovaMateria(e.target.value)} className="w-full border border-gray-300 rounded-lg p-2 bg-white" required />
+                <div className="grid grid-cols-2 gap-2">
+                  <input type="text" placeholder="Local (Sala 02)" value={novoLocal} onChange={(e) => setNovoLocal(e.target.value)} className="border border-gray-300 rounded-lg p-2 bg-white" required />
+                  <select value={novaUnidade} onChange={(e) => setNovaUnidade(e.target.value)} className="border border-gray-300 rounded-lg p-2 bg-white">
+                    <option value="Unidade I">Unidade I</option>
+                    <option value="Unidade II">Unidade II</option>
                   </select>
-                  <div className="grid grid-cols-2 gap-2">
-                    <input type="text" placeholder="Horário (13:30)" className="w-full border border-gray-300 rounded-lg p-2 text-center" />
-                    <input type="text" placeholder="Sala 02" className="w-full border border-gray-300 rounded-lg p-2 text-center" />
-                  </div>
-                  <button type="submit" className="w-full bg-reage-dark text-white font-bold py-2.5 rounded-xl text-xs hover:bg-black uppercase tracking-wide">⚙️ Criar Grupo</button>
                 </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <input type="text" placeholder="Horário (13:30)" value={novaHora} onChange={(e) => setNovaHora(e.target.value)} className="border border-gray-300 rounded-lg p-2 bg-white" required />
+                  <input type="text" placeholder="Senha (vazio se público)" value={novaSenhaGrupo} onChange={(e) => setNovaSenhaGrupo(e.target.value)} className="border border-gray-300 rounded-lg p-2 bg-white" />
+                </div>
+                <button type="submit" className="w-full bg-reage-dark text-white font-bold py-2.5 rounded-xl hover:bg-black uppercase tracking-wide">Salvar Grupo no Banco</button>
               </form>
             </div>
           )}
 
-          {/* CASO 3: LISTAGEM DE GRUPOS EXISTENTES */}
           {abaAtiva === 'buscar' && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 animate-fade-in">
-              <div className="lg:col-span-12 text-center md:text-left mb-2">
-                <h3 className="text-xs font-black bg-reage-dark text-white px-4 py-1.5 rounded-md inline-block uppercase tracking-wider">Grupos Existentes</h3>
+              <div className="lg:col-span-12">
+                <h3 className="text-xs font-black bg-reage-dark text-white px-4 py-1.5 rounded-md inline-block uppercase tracking-wider mb-2">Grupos Cadastrados</h3>
               </div>
-              <div className="lg:col-span-7 space-y-2 max-h-[280px] overflow-y-auto pr-1">
-                
-                {/* INPUT DE BUSCA CONECTADO AO ESTADO */}
+              <div className="lg:col-span-7 space-y-2">
                 <input 
                   type="text" 
-                  placeholder="🔍 Buscar por título ou matéria..." 
+                  placeholder="🔍 Pesquisar no banco..." 
                   value={termoBusca}
                   onChange={(e) => setTermoBusca(e.target.value)}
-                  className="w-full border text-xs p-2 rounded-lg bg-white mb-2 focus:outline-reage-blue" 
+                  className="w-full border text-xs p-2 rounded-lg bg-white mb-2" 
                 />
                 
-                <div className="grid grid-cols-2 gap-2">
-                  {gruposFiltrados.length > 0 ? (
-                    gruposFiltrados.map((g) => (
-                      <div key={g.id} onClick={() => setGrupoSelecionado(g)} className={`p-3 rounded-xl border-2 text-left cursor-pointer transition-all ${grupoSelecionado?.id === g.id ? 'border-reage-blue bg-blue-50/60' : 'border-gray-200 bg-white hover:bg-gray-50'}`}>
+                <div className="grid grid-cols-2 gap-2 max-h-[200px] overflow-y-auto">
+                  {carregando ? (
+                    <p className="text-xs text-gray-500">Buscando...</p>
+                  ) : listaGrupos.length > 0 ? (
+                    listaGrupos.map((g) => (
+                      <div key={g.id} onClick={() => setGrupoSelecionado(g)} className={`p-3 rounded-xl border-2 text-left cursor-pointer transition-all ${grupoSelecionado?.id === g.id ? 'border-reage-blue bg-blue-50' : 'border-gray-200 bg-white'}`}>
                         <div className="flex justify-between items-start mb-1">
-                          <span className="text-[9px] text-gray-400 font-bold">👤 03/10</span>
+                          <span className="text-[9px] text-gray-400 font-bold">ID: {g.id}</span>
                           {g.senha !== "Não" && <span className="text-[9px]">🔒</span>}
                         </div>
-                        <h4 className="font-bold text-[11px] text-reage-dark leading-tight line-clamp-2">{g.titulo}</h4>
+                        <h4 className="font-bold text-[11px] text-reage-dark leading-tight">{g.titulo}</h4>
                         <p className="text-[9px] text-reage-blue font-semibold mt-1">#{g.materia}</p>
                       </div>
                     ))
                   ) : (
-                    <p className="text-xs text-gray-400 italic col-span-2 p-2">Nenhum grupo encontrado.</p>
+                    <p className="text-xs text-gray-400 col-span-2">Nenhum grupo encontrado.</p>
                   )}
                 </div>
               </div>
               
-              <div className="lg:col-span-5 border border-gray-200 bg-white/90 rounded-2xl p-4 flex flex-col justify-between shadow-sm min-h-[240px]">
+              <div className="lg:col-span-5 border border-gray-200 bg-white/90 rounded-2xl p-4 flex flex-col justify-between shadow-sm">
                 {grupoSelecionado ? (
                   <div className="text-[10px] text-gray-600 space-y-2 flex flex-col h-full justify-between">
                     <div>
-                      <h4 className="font-black text-center text-xs text-reage-dark uppercase pb-2 border-b mb-2">Informações do Grupo</h4>
-                      <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[11px]">
-                        <p><strong>Local:</strong> {grupoSelecionado.local}</p>
-                        <p><strong>Unidade:</strong> {grupoSelecionado.unidade}</p>
-                        <p><strong>Hora:</strong> {grupoSelecionado.hora}</p>
-                        <p><strong>Exige Senha:</strong> {grupoSelecionado.senha !== "Não" ? "Sim" : "Não"}</p>
-                        <p className="col-span-2 mt-1"><strong>Matéria:</strong> {grupoSelecionado.materia}</p>
-                      </div>
+                      <h4 className="font-black text-center text-xs text-reage-dark uppercase pb-2 border-b mb-2">{grupoSelecionado.titulo}</h4>
+                      <p><strong>Local:</strong> {grupoSelecionado.local} ({grupoSelecionado.unidade})</p>
+                      <p><strong>Hora:</strong> {grupoSelecionado.hora}</p>
+                      <p><strong>Senha:</strong> {grupoSelecionado.senha !== "Não" ? "Protegido" : "Público"}</p>
                     </div>
                     <button 
                       onClick={() => {
-                        if (grupoSelecionado.senha === "Não") {
-                          setAbaAtiva('painel'); // Entra direto se não tiver senha
+                        if (grupoSelecionado.senha === "Não" || !grupoSelecionado.senha) {
+                          setAbaAtiva('painel');
+                          carregarMensagens(grupoSelecionado.id);
                         } else {
-                          setMostrarModalSenha(true); // Abre o modal de senha
+                          setMostrarModalSenha(true);
                         }
                       }} 
-                      className="w-full bg-[#38A9DC] hover:bg-sky-600 text-white font-bold py-2 rounded-xl text-xs uppercase tracking-wide"
+                      className="w-full bg-[#38A9DC] text-white font-bold py-2 rounded-xl text-xs uppercase"
                     >
-                      {grupoSelecionado.senha !== "Não" ? "🔒 Entrar com Senha" : "+ Participar"}
+                      {grupoSelecionado.senha !== "Não" ? "🔒 Entrar com Senha" : "Entrar no Chat"}
                     </button>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center text-center h-full text-gray-400 p-4">
-                    <span className="text-2xl mb-1">ℹ️</span>
-                    <p className="text-[10px] font-bold uppercase text-reage-dark">Selecione um grupo ao lado</p>
+                  <div className="flex items-center justify-center text-center h-full text-gray-400">
+                    <p className="text-[10px] font-bold uppercase">Selecione um grupo</p>
                   </div>
                 )}
               </div>
             </div>
           )}
 
-          {/* CASO 4: PAINEL INTERNO DO GRUPO (CHAT ATIVO) */}
           {abaAtiva === 'painel' && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 animate-fade-in w-full h-[420px]">
-              <div className="lg:col-span-12 bg-reage-dark text-white px-4 py-2 rounded-xl flex justify-between items-center shadow-sm">
-                <div>
-                  <h3 className="text-xs font-black uppercase tracking-wider">{grupoSelecionado?.titulo || "Grupo de Estudos"}</h3>
-                  <span className="text-[9px] opacity-80">🟢 3 estudantes online</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => setMostrarModalInfo(true)} className="bg-white/20 p-1.5 rounded-lg text-xs hover:bg-white/30">ℹ️ Info</button>
-                  <button onClick={() => { setAbaAtiva('buscar'); setGrupoSelecionado(null); }} className="bg-red-500/80 p-1.5 rounded-lg text-[10px] font-bold hover:bg-red-600">SAIR ✕</button>
-                </div>
+              <div className="lg:col-span-12 bg-reage-dark text-white px-4 py-2 rounded-xl flex justify-between items-center">
+                <h3 className="text-xs font-black uppercase">{grupoSelecionado?.titulo}</h3>
+                <button onClick={() => { setAbaAtiva('buscar'); setGrupoSelecionado(null); }} className="bg-red-500 px-2 py-1 rounded text-[10px] font-bold">SAIR ✕</button>
               </div>
 
-              <div className="lg:col-span-3 bg-white/60 border border-gray-200 rounded-xl p-3 flex flex-col gap-2 overflow-y-auto text-[10px]">
-                <p className="font-bold text-gray-400 uppercase tracking-wider text-[9px] mb-1">Integrantes</p>
-                <div className="flex items-center gap-1.5 bg-blue-50 p-1.5 rounded-md font-bold text-reage-blue"><span>🐷</span> Amanda (Você)</div>
-                <div className="flex items-center gap-1.5 p-1.5 text-gray-600"><span>👤</span> Ariel</div>
-                <div className="flex items-center gap-1.5 p-1.5 text-gray-600"><span>👤</span> Ana Maria</div>
+              <div className="lg:col-span-3 bg-white/60 border rounded-xl p-3 text-[10px]">
+                <p className="font-bold text-gray-400 uppercase mb-1">Chat do Banco</p>
+                <div className="flex items-center gap-1.5 font-bold text-reage-blue"><span>🐷</span> Amanda</div>
               </div>
 
-              <div className="lg:col-span-9 flex flex-col justify-between bg-white border border-gray-200 rounded-xl p-3 shadow-inner h-full overflow-hidden">
+              <div className="lg:col-span-9 flex flex-col justify-between bg-white border rounded-xl p-3 h-full">
                 <div className="space-y-3 overflow-y-auto pr-1 flex-1 text-[11px]">
                   {historicoMensagens.map((msg) => (
                     <div key={msg.id} className={`flex flex-col max-w-[80%] ${msg.autor === "Amanda Laiane" ? 'ml-auto items-end' : 'mr-auto items-start'}`}>
                       <span className="text-[9px] font-bold text-gray-400 mb-0.5">{msg.autor} • {msg.hora}</span>
-                      <div className={`p-2.5 rounded-2xl ${msg.autor === "Amanda Laiane" ? 'bg-reage-blue text-white rounded-tr-none' : 'bg-slate-100 text-gray-800 rounded-tl-none'}`}>
+                      <div className={`p-2.5 rounded-2xl ${msg.autor === "Amanda Laiane" ? 'bg-reage-blue text-white' : 'bg-slate-100 text-gray-800'}`}>
                         {msg.texto}
                       </div>
                     </div>
@@ -276,12 +351,12 @@ const Grupos = () => {
                 <form onSubmit={handleEnviarMensagem} className="flex gap-2 border-t pt-2 mt-2">
                   <input 
                     type="text" 
-                    placeholder="💬 Digite uma mensagem..." 
+                    placeholder="💬 Mensagem..." 
                     value={novaMensagem}
                     onChange={(e) => setNovaMensagem(e.target.value)}
-                    className="flex-grow border border-gray-300 rounded-xl px-4 py-2 text-xs focus:outline-reage-blue bg-white"
+                    className="flex-grow border rounded-xl px-4 py-2 text-xs bg-white"
                   />
-                  <button type="submit" className="bg-reage-dark text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-black">Enviar</button>
+                  <button type="submit" className="bg-reage-dark text-white px-4 py-2 rounded-xl text-xs font-bold">Enviar</button>
                 </form>
               </div>
             </div>
@@ -290,47 +365,22 @@ const Grupos = () => {
         </div>
       </div>
 
-      {/* --- MODAL DE DIGITAR SENHA COM VALIDAÇÃO REAL --- */}
       {mostrarModalSenha && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <form onSubmit={handleEntrarNoGrupo} className="bg-white rounded-3xl p-6 shadow-2xl max-w-xs w-full text-center relative border border-gray-100">
-            <button type="button" onClick={() => { setMostrarModalSenha(false); setErroSenha(''); setSenhaDigitada(''); }} className="absolute right-4 top-4 text-gray-400 hover:text-black font-bold text-sm">✕</button>
-            <h4 className="font-black text-reage-dark text-xs uppercase tracking-wider mb-2">Entrar no Grupo</h4>
-            <p className="text-[10px] text-gray-500 font-medium mb-3">Dica secreta: a senha do primeiro grupo é <code className="bg-gray-100 p-0.5 rounded font-mono">123</code></p>
-            
+          <form onSubmit={handleEntrarNoGrupo} className="bg-white rounded-3xl p-6 shadow-2xl max-w-xs w-full text-center relative">
+            <button type="button" onClick={() => setMostrarModalSenha(false)} className="absolute right-4 top-4 font-bold text-sm">✕</button>
+            <h4 className="font-black text-xs uppercase mb-2">Senha do Grupo</h4>
             <input 
               type="password" 
-              placeholder="Senha do grupo" 
+              placeholder="Digite a senha" 
               value={senhaDigitada} 
               onChange={(e) => setSenhaDigitada(e.target.value)} 
-              className="w-full border border-gray-300 rounded-xl p-2 text-center text-xs mb-2 focus:outline-reage-blue"
+              className="w-full border rounded-xl p-2 text-center text-xs mb-2"
               required 
             />
-
-            {/* MENSAGEM DE ERRO DINÂMICA */}
-            {erroSenha && <p className="text-[10px] text-red-500 font-bold mb-3 animate-pulse">{erroSenha}</p>}
-            
-            <button type="submit" className="w-full bg-reage-dark hover:bg-black text-white py-2 rounded-xl text-xs font-bold uppercase tracking-wide">Confirmar e Entrar</button>
+            {erroSenha && <p className="text-[10px] text-red-500 font-bold mb-2">{erroSenha}</p>}
+            <button type="submit" className="w-full bg-reage-dark text-white py-2 rounded-xl text-xs font-bold uppercase">Entrar</button>
           </form>
-        </div>
-      )}
-
-      {/* --- MODAL INTERNO: INFORMAÇÕES DO GRUPO --- */}
-      {mostrarModalInfo && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl p-6 shadow-2xl max-w-xs w-full relative text-center text-xs text-gray-700 border">
-            <button onClick={() => setMostrarModalInfo(false)} className="absolute right-4 top-4 text-gray-400 font-bold">✕</button>
-            <h4 className="font-black text-reage-dark text-sm uppercase border-b pb-2 mb-4">Informações</h4>
-            <div className="space-y-2 text-left bg-slate-50 p-3 rounded-xl border mb-4 text-[11px]">
-              <p><strong>Matéria:</strong> {grupoSelecionado?.materia}</p>
-              <p><strong>Hora:</strong> {grupoSelecionado?.hora}</p>
-              <p><strong>Local:</strong> {grupoSelecionado?.local} | {grupoSelecionado?.unidade}</p>
-              <p><strong>Data:</strong> {grupoSelecionado?.data}</p>
-            </div>
-            <div className="text-[10px] text-gray-400 bg-gray-100 p-2 rounded-lg break-all">
-              <strong>Link:</strong> https://reage.com/grupos/{grupoSelecionado?.id}
-            </div>
-          </div>
         </div>
       )}
 
@@ -340,7 +390,7 @@ const Grupos = () => {
 
 const MenuOption = ({ icon, label }) => (
   <div className="flex flex-col items-center group cursor-pointer p-2 rounded-xl hover:bg-white/40 transition-colors">
-    <div className="w-12 h-12 bg-reage-dark rounded-xl flex items-center justify-center text-white text-xl mb-1.5 group-hover:scale-105 group-hover:bg-reage-blue transition-all shadow-md">
+    <div className="w-12 h-12 bg-reage-dark rounded-xl flex items-center justify-center text-white text-xl mb-1.5 shadow-md">
       {icon}
     </div>
     <p className="text-[9px] font-bold text-center text-reage-dark uppercase leading-tight max-w-[90px]">
