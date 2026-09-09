@@ -1,4 +1,6 @@
+// src/components/Footer.jsx
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -6,9 +8,7 @@ const Footer = () => {
   return (
     <footer className="bg-reage-dark text-white pt-12 pb-6 mt-auto">
       <div className="max-w-7xl mx-auto px-8">
-        
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-10">
-          
           <div>
             <h3 className="text-reage-yellow text-xl font-bold mb-4">REAGE</h3>
             <p className="text-gray-400 text-sm leading-relaxed">
@@ -17,19 +17,22 @@ const Footer = () => {
               e materiais.
             </p>
           </div>
+
           <div>
             <h3 className="text-reage-yellow text-xl font-bold mb-4">Sobre</h3>
-            <p className="text-gray-400 text-sm leading-relaxed">
-              Quem Somos
-            </p>
+            <ul className="text-gray-400 text-sm space-y-2">
+              <li className="hover:text-reage-yellow cursor-pointer transition-colors">
+                <Link to="/sobre">Quem Somos</Link>
+              </li>
+            </ul>
           </div>
 
           <div>
             <h4 className="font-bold mb-4 border-b border-white/10 pb-2">Ajuda</h4>
             <ul className="text-gray-400 text-sm space-y-2">
-              <li className="hover:text-reage-yellow cursor-pointer transition-colors">Central de ajuda</li>
-              <li className="hover:text-reage-yellow cursor-pointer transition-colors">Segunrança e Privacidade</li>
-              <li className="hover:text-reage-yellow cursor-pointer transition-colors">Politicas de Privacidade</li>
+              <li className="hover:text-reage-yellow cursor-pointer transition-colors">Central de Ajuda</li>
+              <li className="hover:text-reage-yellow cursor-pointer transition-colors">Segurança e Privacidade</li>
+              <li className="hover:text-reage-yellow cursor-pointer transition-colors">Políticas de Privacidade</li>
               <li className="hover:text-reage-yellow cursor-pointer transition-colors">Acessibilidade</li>
             </ul>
           </div>
