@@ -1,9 +1,9 @@
+// src/components/GroupCard.jsx
 import React from 'react';
 
-const GroupCard = ({ title, subject, members, time }) => {
+const GroupCard = ({ title, subject, members, time, onEnterGroup }) => {
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer group">
-      
       <span className="text-[10px] font-bold uppercase tracking-wider text-reage-blue bg-reage-blue/10 px-2 py-1 rounded">
         {subject}
       </span>
@@ -21,7 +21,10 @@ const GroupCard = ({ title, subject, members, time }) => {
         </div>
       </div>
 
-      <button className="w-full mt-5 bg-reage-yellow hover:bg-yellow-400 text-reage-dark font-bold py-2 rounded-lg text-sm transition-colors">
+      <button 
+        onClick={onEnterGroup}
+        className="w-full mt-5 bg-reage-yellow hover:bg-yellow-400 text-reage-dark font-bold py-2 rounded-lg text-sm transition-colors"
+      >
         Entrar no Grupo
       </button>
     </div>
