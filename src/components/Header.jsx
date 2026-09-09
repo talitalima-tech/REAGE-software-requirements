@@ -1,13 +1,11 @@
 // src/components/Header.jsx
 import React from 'react';
-import { Link } from 'react-router-dom'; 
+import { Link, NavLink } from 'react-router-dom';
 
 const Header = () => {
   return (
     <header className="w-full font-sans">
-      
       <div className="bg-reage-blue h-20 flex items-center justify-between px-8 text-white">
-        
         <div className="flex-1"> 
           <Link to="/"> 
             <h1 className="text-2xl font-bold tracking-tighter cursor-pointer">REAGE</h1>
@@ -36,37 +34,24 @@ const Header = () => {
 
       <nav className="bg-reage-yellow h-12 flex items-center justify-center px-8 shadow-md">
         <ul className="flex gap-12 text-reage-dark font-semibold text-sm">
-          
-          <li className="hover:scale-105 transition-transform">
-            <Link to="/" className="hover:underline block py-1">
-              Home
-            </Link>
-          </li>
-          
-          <li className="hover:scale-105 transition-transform">
-            <Link to="/grupos" className="hover:underline block py-1 font-bold">
-              Grupos
-            </Link>
-          </li>
-          
-          <li className="hover:scale-105 transition-transform">
-            <Link to="/cronograma" className="hover:underline block py-1">
-              Cronograma
-            </Link>
-          </li>
-          
-          <li className="hover:scale-105 transition-transform">
-            <Link to="/materiais" className="hover:underline block py-1">
-              Materiais
-            </Link>
-          </li>
-          
-          <li className="hover:scale-105 transition-transform">
-            <Link to="/sobre" className="hover:underline block py-1">
-              Sobre
-            </Link>
-          </li>
-          
+          {[
+            { name: 'Home', path: '/' },
+            { name: 'Grupos', path: '/grupos' },
+            { name: 'Cronograma', path: '/cronograma' },
+            { name: 'Materiais', path: '/materiais' },
+            { name: 'Sobre', path: '/sobre' }
+          ].map((item) => (
+            <li key={item.path} className="hover:scale-105 transition-transform">
+              <NavLink 
+                to={item.path} 
+                className={({ isActive }) => 
+                  `block py-1 hover:underline ${isActive ? 'font-black underline border-b-2 border-reage-dark' : 'font-semibold'}`
+                }
+              >
+                {item.name}
+              </NavLink>
+            </li>
+          ))}
         </ul>
       </nav>
     </header>
